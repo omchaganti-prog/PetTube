@@ -1,9 +1,10 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useFavorites } from '../hooks/useFavorites';
 import { useTheme } from '../hooks/useTheme';
 import { useNotification } from '../hooks/useNotification';
 import { useCollection } from '../hooks/useCollection';
 import { useInventory } from '../hooks/useInventory';
+import { useSyncCtx } from './SyncContext';
 
 type FavoritesCtx = ReturnType<typeof useFavorites>;
 type ThemeCtx = ReturnType<typeof useTheme>;
@@ -23,6 +24,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const notif      = useNotification();
   const collection = useCollection();
   const inventory  = useInventory();
+  const { requestSync } = useSyncCtx();
+
+  // Trigger a cloud sync whenever any important state changes
+  useEffect(() => { requestSync(); },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [collection.discoveredCount, favorites.count, inventory.inventory.claimedQuestIds.length]);
+
   return (
     <ThemeCtx.Provider value={theme}>
       <FavCtx.Provider value={favorites}>

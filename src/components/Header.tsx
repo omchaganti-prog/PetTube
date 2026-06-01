@@ -52,6 +52,9 @@ export default function Header() {
             ❤️ Favorites
             {count > 0 && <span className="fav-badge">{count > 99 ? '99+' : count}</span>}
           </NavLink>
+          <NavLink to="/settings" className={({ isActive }) => isActive ? 'nav-btn active' : 'nav-btn'} title="Settings">
+            ⚙️
+          </NavLink>
           <button className="theme-btn" onClick={() => setProfileOpen((v) => !v)} title="Open profile" aria-label="Open profile">
             👤
           </button>
