@@ -4,6 +4,7 @@ import { ANIMAL_REGISTRY, REGISTRY_BY_ID, REGISTRY_BY_GROUP, getAnimalFact, ALL_
 import { getImageUrl } from '../services/imagePool';
 import { getPityMultipliers, recordDiscovery } from './pitySystem';
 import { getActiveTicketMinRarity, consumeActiveTicket, getBoostMultipliers, getDiscoveredSpeciesIds, tickDiscovery } from './rewardSystem';
+import { recordSpeciesShown, getSpeciesDiversityMultiplier } from './imageHistory';
 
 // Numeric tier order for ticket minimum-rarity comparisons
 const TIER_ORDER: Record<Rarity, number> = {
@@ -11,6 +12,13 @@ const TIER_ORDER: Record<Rarity, number> = {
 };
 
 let imageCounter = 0;
+
+// Running total of discoveries made this session, used for image cooldown scoring
+let sessionDiscoveryCount = 0;
+
+export function getSessionDiscoveryCount(): number {
+  return sessionDiscoveryCount;
+}
 
 function getAnimalEmoji(id: string): string {
   return REGISTRY_BY_ID.get(id)?.emoji ?? '🐾';
@@ -68,6 +76,8 @@ function pickWeightedSpecies(): AnimalCategory {
     if (tier === 'exotic') weight *= boosts.exotic;
     // Insight boost: undiscovered species are more likely
     if (discovered && !discovered.has(entry.id)) weight *= 1.5;
+    // Diversity cooldown: penalise species shown recently
+    weight *= getSpeciesDiversityMultiplier(entry.id);
     return { id: entry.id as AnimalCategory, weight };
   });
 
@@ -92,9 +102,12 @@ export function generateSingleAnimal(
   // Update pity counters and decrement active boosts
   recordDiscovery(rarity);
   tickDiscovery();
+  // Record species shown for diversity cooldown, bump discovery counter for image scoring
+  recordSpeciesShown(category);
+  sessionDiscoveryCount += 1;
   return {
     id: `disc-${category}-${++imageCounter}-${Date.now()}`,
-    url: getImageUrl(category),
+    url: getImageUrl(category, sessionDiscoveryCount),
     category,
     title: `${getAnimalEmoji(category)} ${getAnimalName(category)}`,
     fact: getAnimalFact(category),

@@ -19,6 +19,7 @@
 import { ANIMAL_REGISTRY } from '../data/animalRegistry';
 import { CURATED_SHOTS, shotPriority } from '../data/curatedShots';
 import type { AnimalCategory } from '../types';
+import { recordImageShown, getImageScore } from '../utils/imageHistory';
 
 // ---------------------------------------------------------------------------
 // Priority-sorted shot lists per species (computed once at module load)
@@ -172,28 +173,65 @@ export async function warmUpPool(): Promise<void> {
 
 /**
  * Returns the next species-accurate image URL.
- * Best shots appear first (priority-sorted during warmup).
- * Session deduplication ensures the same image is never shown twice.
+ *
+ * Selection strategy:
+ *  1. Filter out URLs already seen this session.
+ *  2. Score remaining candidates using persistent image history.
+ *     - Never-seen URLs score 100 (highest priority)
+ *     - Recently shown or high-repeat URLs score lower
+ *  3. Pick the highest-scoring candidate.
+ *  4. Fall through to LoremFlickr when the pool is empty.
+ *
+ * @param category       Species category
+ * @param discoveryCount Total species discovered so far (for cooldown calculation)
  */
-export function getImageUrl(category: AnimalCategory): string {
+export function getImageUrl(category: AnimalCategory, discoveryCount = 0): string {
   const catPool = pool[category];
-  if (catPool) {
-    // Walk pool looking for an unseen URL
-    while (catPool.length > 0) {
-      const url = catPool.shift()!;
-      if (!seenUrls.has(url)) {
-        seenUrls.add(url);
-        return url;
-      }
+  if (catPool && catPool.length > 0) {
+    // Collect unseen candidates
+    const candidates = catPool.filter(url => !seenUrls.has(url));
+
+    if (candidates.length > 0) {
+      // Score all candidates using persistent history; pick highest
+      const scored = candidates.map(url => ({
+        url,
+        score: getImageScore(url, discoveryCount),
+      }));
+      scored.sort((a, b) => b.score - a.score);
+
+      const winner = scored[0].url;
+      // Remove winner from pool so it won't be picked again this session
+      const idx = catPool.indexOf(winner);
+      if (idx !== -1) catPool.splice(idx, 1);
+
+      seenUrls.add(winner);
+      recordImageShown(winner, discoveryCount);
+      return winner;
     }
+
+    // All pool entries already seen this session — clear seen set for this category
+    // so the next session can show them again, and fall through to LoremFlickr
+    catPool.forEach(url => seenUrls.delete(url));
   }
+
   // Pool exhausted — LoremFlickr fallback (always unique due to incrementing lock)
   const url = loremFlickrUrl(category);
   seenUrls.add(url);
+  recordImageShown(url, discoveryCount);
   return url;
 }
 
 /** Returns a fresh fallback URL when an image fails to load in a card. */
 export function getFallbackUrl(category: AnimalCategory): string {
   return getImageUrl(category);
+}
+
+/** Returns the number of curated images available (pre-warmup) for a category. */
+export function getCuratedCount(category: AnimalCategory): number {
+  return (CURATED_SHOTS[category] ?? []).length;
+}
+
+/** Returns the live pool size (images fetched but not yet shown) for a category. */
+export function getPoolSize(category: AnimalCategory): number {
+  return pool[category]?.length ?? 0;
 }

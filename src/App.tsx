@@ -15,6 +15,7 @@ import AnimalQuestPage from './pages/AnimalQuestPage';
 import ProgressPage from './pages/ProgressPage';
 import InventoryPage from './pages/InventoryPage';
 import SettingsPage from './pages/SettingsPage';
+import ImageReportPage from './pages/ImageReportPage';
 import './styles/global.css';
 
 // ── Auth gate: shows AuthPage when not logged in ──────────────────────────
@@ -74,6 +75,7 @@ function AppShell() {
               <Route path="/inventory"   element={<InventoryPage />} />
               <Route path="/settings"    element={<SettingsPage />} />
               <Route path="/upgrade"     element={<AuthPage upgradeMode />} />
+              <Route path="/image-report" element={<ImageReportPage />} />
             </Routes>
           </main>
           <NotificationContainer />
