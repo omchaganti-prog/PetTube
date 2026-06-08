@@ -41,7 +41,7 @@ export default function DiscoveryPage() {
     prevGenId.current = current.id;
 
     // Use current.category (species id like "dogs") — NOT current.id (generation uid)
-    const isNew = markDiscovered(current.category);
+    const isNew = markDiscovered(current.category, current.url);
 
     if (isNew) {
       setPopupAnimal(current);

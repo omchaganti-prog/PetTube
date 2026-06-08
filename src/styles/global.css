@@ -2812,54 +2812,135 @@ a { text-decoration: none; color: inherit; }
 
 .collection-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.85rem;
 }
 
+/* Collection card — base */
 .collection-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.7rem 0.4rem;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 2px solid var(--border-color);
   background: var(--card-bg);
-  position: relative;
-  transition: border-color 0.2s;
+  overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
 
 .collection-card.undiscovered {
-  opacity: 0.4;
+  opacity: 0.45;
   filter: grayscale(1);
 }
 
 .collection-card.found {
-  border-width: 2px;
+  border-color: var(--rarity-color, var(--border-color));
 }
 
-.collection-card-emoji { font-size: 1.6rem; }
-.collection-card-name {
-  font-size: 0.75rem;
-  text-align: center;
-  color: var(--text-secondary);
-  line-height: 1.2;
+.collection-card.found:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
-.collection-card-rarity { font-size: 0.8rem; }
-.collection-card-check {
+
+/* ── Image area ── */
+.coll-card-img-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--bg-secondary, #1a1a2e);
+  overflow: hidden;
+}
+
+.coll-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.collection-card.found:hover .coll-card-img {
+  transform: scale(1.04);
+}
+
+.coll-card-emoji-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  background: color-mix(in srgb, var(--rarity-color, var(--accent)) 8%, var(--card-bg));
+}
+
+/* Rarity ribbon at bottom of image */
+.coll-card-rarity-ribbon {
   position: absolute;
-  top: 3px;
-  right: 5px;
-  font-size: 0.7rem;
-  color: #4caf50;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 3px 8px;
+  font-size: 0.68rem;
   font-weight: 700;
+  color: #fff;
+  text-align: center;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
-.collection-found-time {
-  margin-top: 0.25rem;
-  font-size: 0.68rem;
-  color: var(--text-muted);
+/* ── Undiscovered mystery image ── */
+.coll-card-mystery-img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255,255,255,0.03),
+    rgba(255,255,255,0.03) 4px,
+    transparent 4px,
+    transparent 12px
+  );
 }
+
+.coll-mystery-icon {
+  font-size: 2.5rem;
+  opacity: 0.5;
+}
+
+/* ── Card body (name + meta) ── */
+.coll-card-body {
+  padding: 0.55rem 0.65rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.coll-card-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.coll-card-name--unknown {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-style: italic;
+}
+
+.coll-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+
 
 /* ══════════════════════════════════════════════════════════════
    COLLECTION PAGE — enhanced styles (v2)
@@ -2913,48 +2994,7 @@ a { text-decoration: none; color: inherit; }
   border-color: rgba(var(--accent-rgb), 0.5);
 }
 
-/* Collection card — v2 */
-.collection-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.75rem 0.5rem 0.6rem;
-  border-radius: 14px;
-  border: 2px solid var(--border-color);
-  background: var(--card-bg);
-  position: relative;
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-.collection-card.found:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.14);
-}
-.collection-card.undiscovered {
-  opacity: 0.38;
-  filter: grayscale(1);
-}
-.coll-card-mystery { font-size: 2rem; line-height: 1; }
-.coll-card-unknown { font-size: 0.68rem; color: var(--text-secondary); text-align: center; }
 
-/* Per-species metadata inside found card */
-.coll-card-meta {
-  width: 100%;
-  margin-top: 0.3rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-.coll-meta-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.65rem;
-  line-height: 1.3;
-  padding: 0 0.1rem;
-}
-.coll-meta-label { color: var(--text-secondary); white-space: nowrap; }
-.coll-meta-value { font-weight: 600; color: var(--text-primary); text-align: right; }
 
 /* ══════════════════════════════════════════════════════════════
    DISCOVERY POPUP
@@ -3268,7 +3308,7 @@ a { text-decoration: none; color: inherit; }
 /* ── Responsive tweaks for new pages ── */
 @media (max-width: 600px) {
   .quest-species-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
-  .collection-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+  .collection-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   .progress-overview-cards { gap: 0.5rem; }
   .prog-stat-card { min-width: 90px; padding: 0.75rem; }
   .rarity-row-label { min-width: 80px; font-size: 0.78rem; }

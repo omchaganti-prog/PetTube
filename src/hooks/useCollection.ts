@@ -20,9 +20,10 @@ function loadCollection(): CollectionStore {
         } else if (val && typeof val === 'object' && 'discoveredAt' in val) {
           const v = val as Partial<SpeciesEntry>;
           result[id] = {
-            discoveredAt: v.discoveredAt ?? Date.now(),
+            discoveredAt:   v.discoveredAt   ?? Date.now(),
             encounterCount: v.encounterCount ?? 1,
-            favoriteCount: v.favoriteCount ?? 0,
+            favoriteCount:  v.favoriteCount  ?? 0,
+            firstImageUrl:  v.firstImageUrl,
           };
         }
       }
@@ -66,7 +67,7 @@ export function useCollection() {
    * Returns true if this is the FIRST discovery (triggers popup / celebration).
    * Returns false if species was already discovered (encounter count incremented).
    */
-  const markDiscovered = useCallback((animalId: string): boolean => {
+  const markDiscovered = useCallback((animalId: string, imageUrl?: string): boolean => {
     if (!ALL_ANIMAL_IDS.includes(animalId)) return false;
 
     const existing = collRef.current[animalId];
@@ -86,7 +87,12 @@ export function useCollection() {
     // First discovery!
     const updated: CollectionStore = {
       ...collRef.current,
-      [animalId]: { discoveredAt: Date.now(), encounterCount: 1, favoriteCount: 0 },
+      [animalId]: {
+        discoveredAt:   Date.now(),
+        encounterCount: 1,
+        favoriteCount:  0,
+        firstImageUrl:  imageUrl,
+      },
     };
     collRef.current = updated;
     saveCollection(updated);

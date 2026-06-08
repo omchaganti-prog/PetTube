@@ -9,9 +9,10 @@ export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'exotic' | 'legen
 
 /** Per-species persistence record stored in localStorage */
 export interface SpeciesEntry {
-  discoveredAt: number;    // timestamp (ms) when first discovered
-  encounterCount: number;  // total times this species was seen
-  favoriteCount: number;   // times the user favorited this species
+  discoveredAt:   number;    // timestamp (ms) when first discovered
+  encounterCount: number;    // total times this species was seen
+  favoriteCount:  number;    // times the user favorited this species
+  firstImageUrl?: string;    // URL of the image shown on first discovery
 }
 
 /** The full collection store: species id → SpeciesEntry */

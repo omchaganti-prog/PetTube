@@ -124,8 +124,15 @@ export default function CollectionPage() {
             if (!isFound) {
               return (
                 <div key={entry.id} className="collection-card undiscovered">
-                  <div className="coll-card-mystery">❓</div>
-                  <div className="coll-card-unknown">Unknown</div>
+                  <div className="coll-card-mystery-img">
+                    <span className="coll-mystery-icon">❓</span>
+                  </div>
+                  <div className="coll-card-body">
+                    <div className="coll-card-name coll-card-name--unknown">Unknown Species</div>
+                    <div className="collection-card-rarity" style={{ color: RARITY_COLORS[entry.speciesRarity] }}>
+                      {RARITY_ICONS[entry.speciesRarity]}&nbsp;{RARITY_LABELS[entry.speciesRarity]}
+                    </div>
+                  </div>
                 </div>
               );
             }
@@ -134,36 +141,46 @@ export default function CollectionPage() {
               <div
                 key={entry.id}
                 className="collection-card found"
-                style={{ borderColor: rarityColor }}
+                style={{ '--rarity-color': rarityColor } as React.CSSProperties}
               >
-                <div className="collection-card-check">✓</div>
-                <div className="collection-card-emoji">{entry.emoji}</div>
-                <div className="collection-card-name">{entry.name}</div>
-                <div
-                  className="collection-card-rarity"
-                  style={{ color: rarityColor }}
-                >
-                  {RARITY_ICONS[entry.speciesRarity]}&nbsp;{RARITY_LABELS[entry.speciesRarity]}
+                {/* Image area */}
+                <div className="coll-card-img-wrap">
+                  {speciesEntry.firstImageUrl ? (
+                    <img
+                      src={speciesEntry.firstImageUrl}
+                      alt={entry.name}
+                      className="coll-card-img"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <div className="coll-card-emoji-fallback">{entry.emoji}</div>
+                  )}
+                  {/* Rarity ribbon */}
+                  <span
+                    className="coll-card-rarity-ribbon"
+                    style={{ background: rarityColor }}
+                  >
+                    {RARITY_ICONS[entry.speciesRarity]} {RARITY_LABELS[entry.speciesRarity]}
+                  </span>
                 </div>
-                <div className="coll-card-meta">
-                  <div className="coll-meta-row">
-                    <span className="coll-meta-label">Discovered</span>
-                    <span className="coll-meta-value">
-                      {new Date(speciesEntry.discoveredAt).toLocaleDateString('en-US', {
+
+                {/* Info area */}
+                <div className="coll-card-body">
+                  <div className="coll-card-name">{entry.name}</div>
+                  <div className="coll-card-meta">
+                    <span title="Discovery date">
+                      📅 {new Date(speciesEntry.discoveredAt).toLocaleDateString('en-US', {
                         month: 'short', day: 'numeric', year: 'numeric',
                       })}
                     </span>
+                    <span title="Encounter count">
+                      🔭 {speciesEntry.encounterCount}×
+                    </span>
+                    {speciesEntry.favoriteCount > 0 && (
+                      <span title="Times favorited">❤️ {speciesEntry.favoriteCount}</span>
+                    )}
                   </div>
-                  <div className="coll-meta-row">
-                    <span className="coll-meta-label">Encounters</span>
-                    <span className="coll-meta-value">{speciesEntry.encounterCount}</span>
-                  </div>
-                  {speciesEntry.favoriteCount > 0 && (
-                    <div className="coll-meta-row">
-                      <span className="coll-meta-label">❤️ Faved</span>
-                      <span className="coll-meta-value">{speciesEntry.favoriteCount}</span>
-                    </div>
-                  )}
                 </div>
               </div>
             );
