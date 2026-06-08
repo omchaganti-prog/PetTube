@@ -48,7 +48,7 @@ function useDebounced(fn: () => void, ms: number) {
 // ── Provider ──────────────────────────────────────────────────────────────
 
 export function SyncProvider({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
+  const { user, isGuest, logout } = useAuth();
 
   const [cloudLoading, setCloudLoading] = useState(true);
   const [syncStatus, setSyncStatus]     = useState<SyncStatus>('idle');
@@ -57,9 +57,10 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   // ── Initial load: pull cloud → localStorage ────────────────────────────
 
   useEffect(() => {
-    if (!user) {
-      // Not logged in — nothing to load
+    if (!user || isGuest) {
+      // Guest or not logged in — use existing localStorage data as-is
       setCloudLoading(false);
+      setSyncStatus('idle');
       return;
     }
 
@@ -88,7 +89,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   // ── Background sync: localStorage → Firestore ─────────────────────────
 
   const doSync = useCallback(async () => {
-    if (!user) return;
+    if (!user || isGuest) return;
     setSyncStatus('syncing');
     try {
       await saveToCloud(user.uid);
@@ -104,13 +105,12 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   // ── Logout ─────────────────────────────────────────────────────────────
 
   const handleLogout = useCallback(async () => {
-    // Final sync before clearing local data
-    if (user) {
+    if (user && !isGuest) {
       try { await saveToCloud(user.uid); } catch { /* best-effort */ }
     }
     clearLocalData();
     await logout();
-  }, [user, logout]);
+  }, [user, isGuest, logout]);
 
   return (
     <SyncCtx.Provider value={{ cloudLoading, syncStatus, lastSyncedAt, requestSync, handleLogout }}>

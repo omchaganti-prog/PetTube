@@ -1,14 +1,17 @@
 ﻿import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useCollectionCtx, useFavCtx, useThemeCtx, useInventoryCtx } from '../context/AppContext';
 import { getAchievementsUnlocked, getCurrentStreak, getDiscoveryXP, getLevelInfo } from '../utils/progression';
 import { TITLE_DEF_MAP } from '../data/rewardDefinitions';
+import { useAuth } from '../context/AuthContext';
 
 export default function Header() {
   const { count } = useFavCtx();
   const { collection, discoveredCount } = useCollectionCtx();
   const { theme, toggleTheme } = useThemeCtx();
   const { inventory } = useInventoryCtx();
+  const { user, isGuest } = useAuth();
+  const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
 
   const discoveredTimestamps = Object.fromEntries(
@@ -22,6 +25,10 @@ export default function Header() {
   const activeTitle = inventory.activeTitle ? TITLE_DEF_MAP.get(inventory.activeTitle) : null;
   const ticketCount = Object.values(inventory.tickets).reduce((s, n) => s + (n ?? 0), 0);
   const pendingTicket = inventory.pendingTicketMinRarity;
+
+  const profileLabel = isGuest
+    ? 'Guest Explorer'
+    : (user?.displayName ?? user?.email ?? 'Explorer');
 
   return (
     <>
@@ -64,6 +71,16 @@ export default function Header() {
         </nav>
       </header>
 
+      {/* Guest upgrade nudge — shown once above the nav */}
+      {isGuest && (
+        <div className="guest-nudge-bar">
+          <span>☁️ Playing as <strong>Guest Explorer</strong> — progress is saved locally only.</span>
+          <button className="guest-nudge-btn" onClick={() => navigate('/upgrade')}>
+            Create Free Account →
+          </button>
+        </div>
+      )}
+
       {pendingTicket && (
         <div className="header-ticket-banner">
           🎟️ <strong>{pendingTicket.charAt(0).toUpperCase() + pendingTicket.slice(1)}+ Ticket Active</strong>
@@ -74,9 +91,17 @@ export default function Header() {
       {profileOpen && (
         <aside className="profile-drawer" role="dialog" aria-label="Profile summary">
           <div className="profile-drawer-header">
-            <h3>👤 Profile</h3>
+            <h3>👤 {profileLabel}</h3>
             <button className="search-close" onClick={() => setProfileOpen(false)}>Close</button>
           </div>
+          {isGuest && (
+            <button
+              className="profile-upgrade-btn"
+              onClick={() => { setProfileOpen(false); navigate('/upgrade'); }}
+            >
+              ☁️ Save Progress — Create Account
+            </button>
+          )}
           {activeTitle && (
             <div className="profile-title-badge">
               <span>{activeTitle.icon}</span>
@@ -114,3 +139,4 @@ export default function Header() {
     </>
   );
 }
+

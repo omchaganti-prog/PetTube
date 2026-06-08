@@ -93,6 +93,30 @@ export async function saveToCloud(uid: string): Promise<void> {
 }
 
 /**
+ * Grant the welcome pack to a guest who just created an account.
+ * Adds 1 Rare Ticket + 1 Rare Boost directly in localStorage inventory
+ * so the reward is included in the first cloud sync.
+ */
+export function grantWelcomePack(): void {
+  try {
+    const raw  = localStorage.getItem(LS_INVENTORY_KEY);
+    const inv  = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+
+    // Add rare ticket
+    const tickets = (inv.tickets as Record<string, number> | undefined) ?? {};
+    tickets['rare_ticket'] = (tickets['rare_ticket'] ?? 0) + 1;
+    inv.tickets = tickets;
+
+    // Add rare boost (20 discoveries)
+    const boosts = (inv.activeBoosts as unknown[]) ?? [];
+    boosts.push({ type: 'rare_boost', discoveryLimit: 20, discoveriesUsed: 0 });
+    inv.activeBoosts = boosts;
+
+    localStorage.setItem(LS_INVENTORY_KEY, JSON.stringify(inv));
+  } catch { /* ignore */ }
+}
+
+/**
  * Wipe all localStorage keys belonging to this app.
  * Called on logout so a new login starts from cloud data.
  */

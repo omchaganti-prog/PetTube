@@ -20,9 +20,8 @@ import './styles/global.css';
 // ── Auth gate: shows AuthPage when not logged in ──────────────────────────
 
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { user, authLoading } = useAuth();
+  const { user, isGuest, authLoading } = useAuth();
 
-  // Firebase is resolving the persisted session — show a minimal spinner
   if (authLoading) {
     return (
       <div className="auth-gate-loading">
@@ -32,7 +31,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user) return <AuthPage />;
+  // Allow through if signed in OR playing as guest
+  if (!user && !isGuest) return <AuthPage />;
   return <>{children}</>;
 }
 
@@ -73,6 +73,7 @@ function AppShell() {
               <Route path="/progress"    element={<ProgressPage />} />
               <Route path="/inventory"   element={<InventoryPage />} />
               <Route path="/settings"    element={<SettingsPage />} />
+              <Route path="/upgrade"     element={<AuthPage upgradeMode />} />
             </Routes>
           </main>
           <NotificationContainer />

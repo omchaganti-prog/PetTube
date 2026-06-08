@@ -5,22 +5,27 @@ type Mode = 'login' | 'register' | 'reset';
 
 function getFirebaseErrorMessage(code: string): string {
   switch (code) {
-    case 'auth/invalid-email':              return 'Please enter a valid email address.';
-    case 'auth/user-not-found':             return 'No account found with that email.';
-    case 'auth/wrong-password':             return 'Incorrect password. Please try again.';
-    case 'auth/email-already-in-use':       return 'An account with this email already exists.';
-    case 'auth/weak-password':              return 'Password must be at least 6 characters.';
-    case 'auth/too-many-requests':          return 'Too many attempts. Please wait a moment and try again.';
-    case 'auth/network-request-failed':     return 'Network error. Check your connection and try again.';
-    case 'auth/invalid-credential':        return 'Invalid email or password.';
-    default:                               return 'Something went wrong. Please try again.';
+    case 'auth/invalid-email':          return 'Please enter a valid email address.';
+    case 'auth/user-not-found':         return 'No account found with that email.';
+    case 'auth/wrong-password':         return 'Incorrect password. Please try again.';
+    case 'auth/email-already-in-use':   return 'An account with this email already exists.';
+    case 'auth/weak-password':          return 'Password must be at least 6 characters.';
+    case 'auth/too-many-requests':      return 'Too many attempts. Please wait a moment.';
+    case 'auth/network-request-failed': return 'Network error. Check your connection.';
+    case 'auth/invalid-credential':     return 'Invalid email or password.';
+    default:                            return 'Something went wrong. Please try again.';
   }
 }
 
-export default function AuthPage() {
-  const { login, register, resetPassword } = useAuth();
+interface AuthPageProps {
+  /** When true the user is already playing as a guest and wants to upgrade */
+  upgradeMode?: boolean;
+}
 
-  const [mode, setMode]               = useState<Mode>('login');
+export default function AuthPage({ upgradeMode = false }: AuthPageProps) {
+  const { login, register, resetPassword, continueAsGuest } = useAuth();
+
+  const [mode, setMode]               = useState<Mode>(upgradeMode ? 'register' : 'login');
   const [email, setEmail]             = useState('');
   const [password, setPassword]       = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -40,7 +45,9 @@ export default function AuthPage() {
       } else if (mode === 'register') {
         if (!displayName.trim()) { setError('Please enter your name.'); setLoading(false); return; }
         await register(email.trim(), password, displayName.trim());
-        setInfo('Account created! Check your email to verify your address.');
+        setInfo(upgradeMode
+          ? '🎉 Account created! Your progress has been saved to the cloud.'
+          : 'Account created! Check your email to verify your address.');
       } else {
         await resetPassword(email.trim());
         setInfo('Password reset email sent! Check your inbox.');
@@ -52,19 +59,33 @@ export default function AuthPage() {
     } finally {
       setLoading(false);
     }
-  }, [mode, email, password, displayName, login, register, resetPassword]);
+  }, [mode, email, password, displayName, login, register, resetPassword, upgradeMode]);
 
   return (
     <div className="auth-page">
       <div className="auth-card">
+
         {/* Header */}
         <div className="auth-header">
           <span className="auth-logo">🐾</span>
           <h1 className="auth-title">PetTube</h1>
-          <p className="auth-subtitle">Discover the animal kingdom</p>
+          <p className="auth-subtitle">
+            {upgradeMode ? 'Save your progress to the cloud' : 'Discover the animal kingdom'}
+          </p>
         </div>
 
-        {/* Mode tabs */}
+        {/* Upgrade banner */}
+        {upgradeMode && (
+          <div className="auth-upgrade-banner">
+            <span>☁️</span>
+            <div>
+              <strong>Transfer your guest progress</strong>
+              <p>All your discoveries, rewards and favorites will move to your new account.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Mode tabs (hidden in upgrade mode on reset screen) */}
         {mode !== 'reset' && (
           <div className="auth-tabs">
             <button
@@ -86,6 +107,13 @@ export default function AuthPage() {
           <div className="auth-reset-header">
             <h2>Reset Password</h2>
             <p>Enter your email and we'll send a reset link.</p>
+          </div>
+        )}
+
+        {/* Welcome pack teaser for register tab */}
+        {mode === 'register' && !upgradeMode && (
+          <div className="auth-welcome-pack">
+            🎁 <strong>Welcome Pack</strong> — create an account and receive a free Rare Ticket + Discovery Boost
           </div>
         )}
 
@@ -139,12 +167,25 @@ export default function AuthPage() {
 
           <button className="auth-submit" type="submit" disabled={loading}>
             {loading
-              ? '...'
+              ? '…'
               : mode === 'login'    ? 'Sign In'
-              : mode === 'register' ? 'Create Account'
+              : mode === 'register' ? (upgradeMode ? '☁️ Save & Upgrade Account' : 'Create Account')
               : 'Send Reset Link'}
           </button>
         </form>
+
+        {/* Guest divider + button (only on the initial login screen) */}
+        {!upgradeMode && mode !== 'reset' && (
+          <>
+            <div className="auth-divider"><span>or</span></div>
+            <button className="auth-guest-btn" onClick={continueAsGuest}>
+              🐾 Continue as Guest
+            </button>
+            <p className="auth-guest-note">
+              Progress is saved locally. Create an account any time to protect it.
+            </p>
+          </>
+        )}
 
         {/* Footer links */}
         <div className="auth-footer">
@@ -163,3 +204,4 @@ export default function AuthPage() {
     </div>
   );
 }
+
